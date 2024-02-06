@@ -1,35 +1,14 @@
-/* Copyright (c) 2023 FIRST. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted (subject to the limitations in the disclaimer below) provided that
- * the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list
- * of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice, this
- * list of conditions and the following disclaimer in the documentation and/or
- * other materials provided with the distribution.
- *
- * Neither the name of FIRST nor the names of its contributors may be used to endorse or
- * promote products derived from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
- * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.hardware.Blinker;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.HardwareDevice;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -41,15 +20,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import java.util.List;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Blinker;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.HardwareDevice;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -59,39 +30,49 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @Autonomous
 
 public class StartNew extends LinearOpMode {
-    private DcMotor BL;
-    private DcMotor BR;
-    private Blinker control_Hub;
-    private DcMotor Elbow;
-    private Blinker expansion_Hub_2;
-    private DcMotor FL;
-    private DcMotor FR;
-    private DcMotor LArm;
-    private Servo LClaw;
-    private Servo Plane;
-    private DcMotor RArm;
-    private Servo RClaw;
-    private HardwareDevice Webcam_1;
-    private Servo Wrist;
-    private IMU imu;
-    private ColorSensor fSensor;
-    private DistanceSensor distSensor;
-    private double Green;
-    private double Blue;
-    private double Red;
-    NormalizedColorSensor colorSensor;
+  //control systems
+  private Blinker control_Hub;
+  private Blinker expansion_Hub_2;
+  private IMU imu;
+  //drive motors 
+  private DcMotor BL;
+  private DcMotor BR;
+  private DcMotor FL;
+  private DcMotor FR;
+  //arm systems
+  private DcMotor LArm;
+  private DcMotor RArm;
+  private DcMotor Elbow;
+  private Servo Wrist;
+  private Servo LClaw;//the claws are mismatched and I literally cannot for the life of me figure out how to fix it
+  private Servo RClaw;//so this is actually the left claw
+  private Servo Plane;
+  //sensors
+  private HardwareDevice Webcam_1;
+  private DistanceSensor distSensor;
+  private ColorSensor fSensor;
+  private double Green;
+  private double Blue;
+  private double Red;
+  NormalizedColorSensor colorSensor;
 
-    private static final boolean USE_WEBCAM = true; 
-    private final String[] LABELS = {"Blue", "Red"};
+  //initializing the use of a webcam and also inporting the labels for tensor flow,
+  //one for red object and one for blue
+  private static final boolean USE_WEBCAM = true; 
+  private final String[] LABELS = {"Blue", "Red"};
+  
+  //processors for apriltag and tensorflow
+  private AprilTagProcessor aprilTag;
+  private TfodProcessor tfod;
+  private VisionPortal myVisionPortal;
+  
+  //instance variable to house which location the object is, 1 being left, 2 middle, 3 right
+  //it is set as -1 to show that it has not found anything 
+  private int found = -1;
     
-    private AprilTagProcessor aprilTag;
-    private TfodProcessor tfod;
-    private VisionPortal myVisionPortal;
-
-    @Override
-    public void runOpMode() {
-        initDoubleVision();
-        Wrist = hardwareMap.get(Servo.class, "Wrist");
+  @Override
+  public void runOpMode() {
+    Wrist = hardwareMap.get(Servo.class, "Wrist");
     FR = hardwareMap.get(DcMotor.class, "FR");
     BR = hardwareMap.get(DcMotor.class, "BR");
     FL = hardwareMap.get(DcMotor.class, "FL");
@@ -105,25 +86,143 @@ public class StartNew extends LinearOpMode {
     fSensor = hardwareMap.get(ColorSensor.class, "fSensor");
     imu = hardwareMap.get(IMU.class, "imu");
     distSensor = hardwareMap.get(DistanceSensor.class, "distSensor");
-
+    initialize();
+    initDoubleVision();
     waitForStart();
-        // This OpMode loops continuously, allowing the user to switch between
-        // AprilTag and TensorFlow Object Detection (TFOD) image processors.
-        while (!isStopRequested())  {
-
-            
-
-           
-                
-            //myVisionPortal.setProcessorEnabled(aprilTag, false);
-            //myVisionPortal.setProcessorEnabled(tfod, false);
-
-            sleep(20);
-
-        }   // end while loop
-
-    }   // end method runOpMode()
-
+    
+        
+    if(opModeIsActive() == true){
+    
+    
+    Wrist.setPosition(0);
+    LClaw.setPosition(0);
+    RClaw.setPosition(0);
+    LClaw.setPosition(1);
+    RClaw.setPosition(1);
+    sleep(50);
+    armSet();
+    
+    resetRuntime();
+    //runs while the opMode is running, and the object is not found, and runs until 7 seconds have passed
+    while (!isStopRequested()&&(found==-1)){
+      scanTfod();
+      telemetryTfod();
+      telemetry.update();
+      if(getRuntime()>4){
+        //if the object isnt found within the time limit then it is set to zone 3
+        found =1;
+        break;
+      }
+    }   //end while
+    
+    //disable the processors and close the vision portal to save on cpu usage
+    myVisionPortal.setProcessorEnabled(tfod, false);
+    myVisionPortal.setProcessorEnabled(aprilTag, false);
+    myVisionPortal.close();
+    //displays which area the object is found in and resets the angle 
+    telemetry.addData("Found: ", found);
+    telemetry.update();
+    IMUTurn(0,.2);
+    
+    //if the object is in the most left area
+    if(found == 1){
+      strafeLeft(700,.4,true);
+      forward(900,.5,true);
+      armDown();
+      sleep(50);
+      RClaw.setPosition(0);
+      sleep(300);
+      armSet();
+      Wrist.setPosition(1);
+      backwards(200,.3,true);
+      turnLeft(900,.4,true);
+      score();
+      IMUTurn(90,.15);
+      forward(500,.3,true);
+      strafeRight(300,.3,true);
+      forward(500,.3,true);
+      while(distSensor.getDistance(DistanceUnit.CM) >= 9){
+        move(.1);
+      }
+      resetEncoders();
+      strafeLeft(240,.2,true);
+      sleep(1000);
+      LClaw.setPosition(0);
+      sleep(500);
+      Wrist.setPosition(1);
+      backwards(150,.3,true);
+      sleep(200);
+      armDown();
+      strafeLeft(900,.3,true);
+    }
+    //if object is in the middle
+    else if(found == 2){
+      strafeLeft(200,.3,true);
+      forward(1000,.5,true);
+      armDown();
+      forward(320,.5,true);
+      //strafeRight(200,.4,true);
+      Wrist.setPosition(0);
+      RClaw.setPosition(0);
+      sleep(400);
+      armSet();
+      backwards(610,.4,true);
+      strafeLeft(200,.4,true);
+      turnLeft(900,.4,true);
+      IMUTurn(90,.2);
+      forward(1350,.4,true);
+      strafeRight(470,.3,true);
+      score();
+      IMUTurn(90,.1);
+      while(distSensor.getDistance(DistanceUnit.CM) >= 9){
+        move(.1);
+      }
+      resetEncoders();
+      sleep(1000);
+      LClaw.setPosition(0);
+      sleep(200);
+      Wrist.setPosition(1);
+      backwards(150,.3,true);
+      sleep(100);
+      armDown();
+      strafeLeft(1200,.3,true);
+    }
+    //if the object is not found it assumes it is in the area it cannot see
+    else if(found ==3) {
+      strafeLeft(300,.3,true);
+      IMUTurn(0,.15);
+      forward(1150,.5,true);
+      turnRight(900,.4,true);
+      IMUTurn(-90,.15);
+      forward(350,.3,true);
+      Wrist.setPosition(0);
+      RClaw.setPosition(0);
+      sleep(400);
+      armSet();
+      backwards(1000,.5,true);
+      turnLeft(1800,.5,true);
+      IMUTurn(90,.15);
+      forward(750,.35,true);//change with testing
+      score();
+      strafeRight(300,.3,true);
+      while(distSensor.getDistance(DistanceUnit.CM) >= 9){
+        move(.1);
+      }
+      resetEncoders();
+      sleep(200);
+      LClaw.setPosition(0);
+      sleep(100);
+      Wrist.setPosition(1);
+      sleep(30);
+      backwards(150,.2,true);
+      sleep(100);
+      armDown();
+      strafeLeft(1400,.3,true);
+      forward(300,.2,true);
+    }
+    
+  }//end if opmode is true
+}//end runopmode
 
     /**
      * Initialize AprilTag and TFOD.
@@ -140,7 +239,7 @@ public class StartNew extends LinearOpMode {
     // First, create a TfodProcessor.Builder.
     tensorBuilder = new TfodProcessor.Builder();
     // Set the name of the file where the model can be found.
-    tensorBuilder.setModelFileName("squish.tflite");
+    tensorBuilder.setModelFileName("2-5-24.tflite");
     // Set the full ordered list of labels the model is trained to recognize.
     tensorBuilder.setModelLabels(LABELS);
     // Set the aspect ratio for the images used when the model was created.
@@ -187,8 +286,18 @@ public class StartNew extends LinearOpMode {
       for (Recognition recognition : currentRecognitions) {
             double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
             double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
+            double conf = (recognition.getConfidence() * 100);
+      
+      if(0<=x&&x<=300){
+        found = 2;
       }
+      else if(300<=x&&x<=640){
+        found = 3;
+      }
+      
+      }//end for
     }
+    
     /**
      * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
      */
@@ -209,6 +318,7 @@ public class StartNew extends LinearOpMode {
 
     }   // end method telemetryTfod()
 
+/*
     private void tfodFind();{
         List<Recognition> currentRecognitions = tfod.getRecognitions();
         
@@ -219,9 +329,10 @@ public class StartNew extends LinearOpMode {
             
         }
     }
+    */
     //puts the arm down
   public void armDown(){
-    Wrist.setPosition(1);
+    //Wrist.setPosition(1);
     sleep(50);
     Elbow.setTargetPosition(0);
     Elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -234,9 +345,14 @@ public class StartNew extends LinearOpMode {
     RArm.setPower(0.25);
   }//end armDown
        
+  public void armSet(){
+    Elbow.setTargetPosition(-100);
+    Elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    Elbow.setPower(0.6);
+  }
   //moves the arms to scoring position 
   public void score(){
-    Elbow.setTargetPosition(-440);
+    Elbow.setTargetPosition(-550);
     Elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     Elbow.setPower(0.5);
     LArm.setTargetPosition(-125);
@@ -268,15 +384,15 @@ public class StartNew extends LinearOpMode {
     Elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     Elbow.setDirection(DcMotor.Direction.FORWARD);
     LClaw.setDirection(Servo.Direction.REVERSE);
-    LClaw.scaleRange(0.45, 0.55);
-    RClaw.scaleRange(0.01, 0.12);
+    LClaw.scaleRange(0.48, 0.55);
+    RClaw.scaleRange(0.01, 0.09);
     Wrist.scaleRange(0.19, 0.75);
     resetEncoders();
     imu.resetYaw();
   }//end initialize
         
   //method for setting the colors to a variable
-  public void scan(){
+  public void scanColors(){
     Red = fSensor.red();
     Blue = fSensor.blue();
     Green = fSensor.green();
@@ -323,9 +439,24 @@ public class StartNew extends LinearOpMode {
     BL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     BR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
   }//end resetEncoders
-    
-    
-    
+  
+  //not work rn?
+  /*  
+  public void diagonalRight(double speed){
+    BL.setPower(speed);
+    BR.setPower(0);
+    FL.setPower(0);
+    FR.setPower(speed);
+  }
+  
+  public void diagonalLeft(double speed){
+    BL.setPower(0);
+    BR.setPower(speed);
+    FL.setPower(speed);
+    FR.setPower(0);
+  }
+  */  
+  
   //Makes the motors turn, so the robot turns
   //Positive is left, negative is right
   public void turning(double speed){
@@ -467,6 +598,12 @@ public class StartNew extends LinearOpMode {
     }//end if
   }//end backwards
     
+    
+    
+  public void sweep(double angle, double speed){
+    IMUTurn(25,.2);
+    IMUTurn(-25,.2);
+  }
   //Makes the robot turn to a specified angle
   //The angle depends on the last time the IMU values were reset
   //The robot turns until the robot's angle is 0.5 off the specified angle
