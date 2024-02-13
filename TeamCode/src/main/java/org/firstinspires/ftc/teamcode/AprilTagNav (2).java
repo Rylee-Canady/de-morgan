@@ -96,11 +96,11 @@ public class AprilTagNav extends LinearOpMode {
     
     //set the apriltag target right after finding the location objective
     //tagTarget = found
-    while(opModeIsActive()){
+    
       
     
     findAprilTag();
-    }
+    
   }//end if opmode is true
 }//end runopmode
 
@@ -155,7 +155,6 @@ private void findAprilTag() {
     double minX = -0.5;
     double maxX = 0.5;
 
-    while (opModeIsActive()) {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         for (AprilTagDetection detection : currentDetections) {
             if (detection.id == found) {
@@ -165,7 +164,8 @@ private void findAprilTag() {
                 IMUTurn(getAngle() + currentYaw, 0.1);
 
                 while (!(currentX > minX && currentX < maxX) && opModeIsActive()) {
-                    currentX = detection.ftcPose.x;
+                    aprilTag.getDetections();
+                  currentX = detection.ftcPose.x;
                     if (currentX < minX) {
                         // Turn left
                         strafe(-0.1);
@@ -182,7 +182,7 @@ private void findAprilTag() {
             }
         }
         telemetry.update(); // Update telemetry if needed
-    }
+    
 }
 
 
