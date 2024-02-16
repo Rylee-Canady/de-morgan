@@ -29,7 +29,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @Autonomous
 
-public class CameraCloseBlue extends LinearOpMode {
+public class CameraFarRed extends LinearOpMode {
   //control systems
   private Blinker control_Hub;
   private Blinker expansion_Hub_2;
@@ -204,7 +204,7 @@ public class CameraCloseBlue extends LinearOpMode {
       IMUTurn(0,.15);
       forward(1000,.5,true);
       turnRight(900,.5,true);
-      IMUTurn(-90,.15,true);
+      //IMUTurn(-90,.15,true);
       forward(3600,.7,true);
       strafeRight(1600,.5,true);
       score();
