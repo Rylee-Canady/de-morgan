@@ -29,7 +29,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @Autonomous
 
-public class AprilTagNav extends LinearOpMode {
+public class AprilTagNav_2 extends LinearOpMode {
   //control systems
   private Blinker control_Hub;
   private Blinker expansion_Hub_2;
@@ -155,7 +155,7 @@ private void findAprilTag() {
     double minX = -0.5;
     double maxX = 0.5;
 
-    while (opModeIsActive()) {
+
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         for (AprilTagDetection detection : currentDetections) {
             if (detection.id == found) {
@@ -163,18 +163,18 @@ private void findAprilTag() {
                 double currentYaw = detection.ftcPose.yaw; // Update yaw angle
 
                 IMUTurn(getAngle() + currentYaw, 0.1);
-
+                //while current x is not greater than min x or current x is not less than max x
                 while (!(currentX > minX && currentX < maxX) && opModeIsActive()) {
-                    currentX = detection.ftcPose.x;
+                  aprilTag.getFreshDetections();
+                  currentX = detection.ftcPose.x;
                     if (currentX < minX) {
                         // Turn left
-                        strafe(-0.1);
+                        strafe(0.1);
                     } else if (currentX > maxX) {
                         // Turn right
-                        strafe(0.1);
+                        strafe(-0.1);
                     }
-                    // Update X coordinate for the next iteration
-                    currentX = detection.ftcPose.x;
+
                 }
                 // Stop strafing once the X coordinate is within range
                 strafe(0);
@@ -182,7 +182,7 @@ private void findAprilTag() {
             }
         }
         telemetry.update(); // Update telemetry if needed
-    }
+
 }
 
 

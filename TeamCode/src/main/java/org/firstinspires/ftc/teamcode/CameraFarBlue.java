@@ -58,18 +58,18 @@ public class CameraFarBlue extends LinearOpMode {
 
   //initializing the use of a webcam and also inporting the labels for tensor flow,
   //one for red object and one for blue
-  private static final boolean USE_WEBCAM = true; 
+  private static final boolean USE_WEBCAM = true;
   private final String[] LABELS = {"Blue", "Red"};
-  
+
   //processors for apriltag and tensorflow
   private AprilTagProcessor aprilTag;
   private TfodProcessor tfod;
   private VisionPortal myVisionPortal;
-  
+
   //instance variable to house which location the object is, 1 being left, 2 middle, 3 right
   //it is set as -1 to show that it has not found anything 
   private int found = -1;
-    
+
   @Override
   public void runOpMode() {
     Wrist = hardwareMap.get(Servo.class, "Wrist");
@@ -89,170 +89,176 @@ public class CameraFarBlue extends LinearOpMode {
     initialize();
     initDoubleVision();
     waitForStart();
-    
-        
-    if(opModeIsActive() == true){
-    
-    
-    Wrist.setPosition(0);
-    LClaw.setPosition(0);
-    RClaw.setPosition(0);
-    LClaw.setPosition(1);
-    RClaw.setPosition(1);
-    sleep(50);
-    armSet();
-    
-    resetRuntime();
-    //runs while the opMode is running, and the object is not found, and runs until 7 seconds have passed
-    while (!isStopRequested()&&(found==-1)){
-      scanTfod();
-      telemetryTfod();
-      telemetry.update();
-      if(getRuntime()>4){
-        //if the object isnt found within the time limit then it is set to zone 1
-        break;
-      }
-    }   //end while
-    
-    if(found ==-1){
-      found =1;
-    }
-    //disable the processors and close the vision portal to save on cpu usage
-    myVisionPortal.setProcessorEnabled(tfod, false);
-    myVisionPortal.setProcessorEnabled(aprilTag, false);
-    myVisionPortal.close();
-    //displays which area the object is found in and resets the angle 
-    telemetry.addData("Found: ", found);
-    telemetry.update();
-    IMUTurn(0,.2);
-    
-    //if the object is in the most left area
-    if(found == 1){
-      strafeLeft(200,.4,true);
-      forward(1050,.5,true);
-      strafeLeft(575,.4,true);
-      armDown();
-      sleep(50);
-      RClaw.setPosition(0);
-      sleep(300);
-      armSet();
-      Wrist.setPosition(1);
-      backwards(75,.3,true);
-      strafeRight(425,.5,true);
-      forward(1150,.5,true);
-      turnLeft(900,.4,true);
-      IMUTurn(90,.15);
-      forward(3400,.7,true);
-      score();
-      strafeLeft(1500,.4,true);
-      while(distSensor.getDistance(DistanceUnit.CM) >= 9){
-        move(.1);
-      }
-      resetEncoders();
-      strafeLeft(210,.2,true);
-      sleep(1000);
-      LClaw.setPosition(0);
-      sleep(500);
-      Wrist.setPosition(1);
-      backwards(150,.3,true);
-      sleep(200);
-      armDown();
-      strafeLeft(900,.3,true);
-    }
-    //if object is in the middle
-    else if(found == 2){
-      strafeRight(300,.4,true);
-      forward(1800,.5,true);
-      turnLeft(900,.4,true);
-      IMUTurn(90,.15);
-      armDown();
-      forward(50,.5,true);
-      Wrist.setPosition(0);
-      RClaw.setPosition(0);
-      sleep(300);
-      armSet();
-      backwards(300,.4,true);
-      turnRight(1800,.5,true);
-      IMUTurn(-90,.2);
-      stack();
-      strafeRight(760,.4,true);
-      IMUTurn(-90,.1);
-      while(distSensor.getDistance(DistanceUnit.CM) >= 2){
-        move(.1);
-      }
-      resetEncoders();
-      RClaw.setPosition(1);
-      sleep(20);
-      offStack();
-      backwards(175,.2,true);
-      IMUTurn(-90,.1);
-      strafeLeft(1000,.4,true);
-      turnLeft(1800,.6,true);
-      IMUTurn(90,.15);
-      forward(3600,.7,true);
-      score();
-      strafeLeft(1400,.4,true);
-      while(distSensor.getDistance(DistanceUnit.CM) >= 9){
-        move(.1);
-      }
-      resetEncoders();
-      sleep(1000);
-      LClaw.setPosition(0);
-      sleep(200);
-      Wrist.setPosition(1);
-      backwards(150,.3,true);
-      sleep(100);
-      armDown();
-      strafeLeft(1200,.3,true);
-    }
-    //if the object is not found it assumes it is in the area it cannot see
-    else if(found ==4) {
-      strafeLeft(300,.3,true);
-      IMUTurn(0,.15);
-      forward(1150,.5,true);
-      turnRight(900,.4,true);
-      IMUTurn(-90,.15);
-      forward(350,.3,true);
-      Wrist.setPosition(0);
-      RClaw.setPosition(0);
-      sleep(400);
-      armSet();
-      backwards(1000,.5,true);
-      turnLeft(1800,.5,true);
-      IMUTurn(90,.15);
-      forward(750,.35,true);//change with testing
-      score();
-      strafeRight(300,.3,true);
-      while(distSensor.getDistance(DistanceUnit.CM) >= 9){
-        move(.1);
-      }
-      resetEncoders();
-      sleep(200);
-      LClaw.setPosition(0);
-      sleep(100);
-      Wrist.setPosition(1);
-      sleep(30);
-      backwards(150,.2,true);
-      sleep(100);
-      armDown();
-      strafeLeft(1400,.3,true);
-      forward(300,.2,true);
-    }
-    
-  }//end if opmode is true
-}//end runopmode
 
-    /**
-     * Initialize AprilTag and TFOD.
-     */
-    private void initDoubleVision() {
-        
-        aprilTag = new AprilTagProcessor.Builder()
+
+    if(opModeIsActive() == true){
+
+
+      Wrist.setPosition(0);
+      LClaw.setPosition(0);
+      RClaw.setPosition(0);
+      LClaw.setPosition(1);
+      RClaw.setPosition(1);
+      sleep(50);
+      armSet();
+
+      resetRuntime();
+      //runs while the opMode is running, and the object is not found, and runs until 7 seconds have passed
+      while (!isStopRequested()&&(found==-1)){
+        scanTfod();
+        telemetryTfod();
+        telemetry.update();
+        if(getRuntime()>4){
+          //if the object isnt found within the time limit then it is set to zone 1
+          break;
+        }
+      }   //end while
+
+      if(found ==-1){
+        found =1;
+      }
+
+      //disable the processors and close the vision portal to save on cpu usage
+      myVisionPortal.setProcessorEnabled(tfod, false);
+      myVisionPortal.setProcessorEnabled(aprilTag, false);
+      myVisionPortal.close();
+      //displays which area the object is found in and resets the angle
+      telemetry.addData("Found: ", found);
+      telemetry.update();
+      IMUTurn(0,.2);
+      LClaw.setPosition(1);
+      RClaw.setPosition(1);
+
+      //if the object is in the most left area
+      if(found == 1){
+        strafeLeft(200,.4,true);
+        forward(1070,.5,true);
+        strafeLeft(575,.4,true);
+        armDown();
+        sleep(50);
+        RClaw.setPosition(0);
+        sleep(300);
+        armSet();
+        //Wrist.setPosition(1);
+        backwards(75,.3,true);
+        strafeRight(425,.5,true);
+        forward(1150,.5,true);
+        turnLeft(900,.4,true);
+        IMUTurn(90,.15);
+        forward(3400,.7,true);
+        score();
+        strafeLeft(1500,.4,true);
+        while(distSensor.getDistance(DistanceUnit.CM) >= 9){
+          move(.1);
+        }
+        resetEncoders();
+        strafeLeft(210,.2,true);
+        sleep(1000);
+        LClaw.setPosition(0);
+        sleep(500);
+        Wrist.setPosition(1);
+        backwards(150,.3,true);
+        sleep(200);
+        armDown();
+        strafeLeft(900,.3,true);
+      }
+      //if object is in the middle
+      else if(found == 2){
+        strafeRight(300,.4,true);
+        forward(1800,.5,true);
+        turnLeft(900,.4,true);
+        IMUTurn(90,.15);
+        armDown();
+        forward(50,.5,true);
+        Wrist.setPosition(0);
+        RClaw.setPosition(0);
+        sleep(300);
+        armSet();
+        backwards(300,.4,true);
+        // turnRight(1800,.5,true);
+        // IMUTurn(-90,.2);
+        // stack();
+        // strafeRight(760,.4,true);
+        // IMUTurn(-90,.1);
+        // while(distSensor.getDistance(DistanceUnit.CM) >= 2){
+        //   move(.1);
+        // }
+        // resetEncoders();
+        // RClaw.setPosition(1);
+        // sleep(20);
+        // offStack();
+        // backwards(175,.2,true);
+        // IMUTurn(-90,.1);
+        // strafeLeft(1000,.4,true);
+        // turnLeft(1800,.6,true);
+        strafeRight(550,.5,true);
+        IMUTurn(90,.15);
+        forward(3750,.8,true);
+        IMUTurn(90,.1);
+        score();
+        strafeLeft(1240,.4,true);
+        IMUTurn(90,.1);
+        while(distSensor.getDistance(DistanceUnit.CM) >= 9){
+          move(.1);
+        }
+        resetEncoders();
+        sleep(1000);
+        LClaw.setPosition(0);
+        sleep(200);
+        Wrist.setPosition(1);
+        backwards(150,.3,true);
+        sleep(100);
+        armDown();
+        strafeLeft(1200,.3,true);
+      }
+      //if the object is not found it assumes it is in the area it cannot see
+      else if(found ==3) {
+        strafeRight(490,.3,true);
+        IMUTurn(0,.15);
+        forward(1150,.5,true);
+        sleep(50);
+        Wrist.setPosition(0);
+        RClaw.setPosition(0);
+        sleep(400);
+        armSet();
+        backwards(200,.5,true);
+        strafeLeft(600,.4,true);
+        forward(1300,.5,true);
+        turnLeft(900,.4,true);
+        IMUTurn(90,.15);
+        forward(3650,.7,true);//change with testing
+        score();
+        strafeLeft(1000,.4,true);
+        while(distSensor.getDistance(DistanceUnit.CM) >= 9){
+          move(.1);
+        }
+        resetEncoders();
+        sleep(700);
+        LClaw.setPosition(0);
+        sleep(300);
+        Wrist.setPosition(1);
+        sleep(30);
+        backwards(150,.2,true);
+        sleep(100);
+        armDown();
+        strafeLeft(1450,.3,true);
+        forward(300,.2,true);
+      }
+
+    }//end if opmode is true
+  }//end runopmode
+
+  /**
+   * Initialize AprilTag and TFOD.
+   */
+  private void initDoubleVision() {
+
+    aprilTag = new AprilTagProcessor.Builder()
             .build();
 
-    
-        TfodProcessor.Builder tensorBuilder;
-        VisionPortal.Builder tensorVisionPortal;
+
+    TfodProcessor.Builder tensorBuilder;
+    VisionPortal.Builder tensorVisionPortal;
 
     // First, create a TfodProcessor.Builder.
     tensorBuilder = new TfodProcessor.Builder();
@@ -266,92 +272,92 @@ public class CameraFarBlue extends LinearOpMode {
     tfod = tensorBuilder.build();
     // Next, create a VisionPortal.Builder and set attributes related to the camera.
 
-        
+
     myVisionPortal = new VisionPortal.Builder()
-        .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-        .addProcessors(tfod, aprilTag)
-        .build();
-        
-    }   // end initDoubleVision()
+            .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+            .addProcessors(tfod, aprilTag)
+            .build();
 
-    /**
-     * Add telemetry about AprilTag detections.
-     */
-    private void telemetryAprilTag() {
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        telemetry.addData("# AprilTags Detected", currentDetections.size());
+  }   // end initDoubleVision()
 
-        // Step through the list of detections and display info for each one.
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
-                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-            } else {
-                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
-            }
-        }   // end for() loop
+  /**
+   * Add telemetry about AprilTag detections.
+   */
+  private void telemetryAprilTag() {
+    List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+    telemetry.addData("# AprilTags Detected", currentDetections.size());
 
-    }   // end method telemetryAprilTag()
+    // Step through the list of detections and display info for each one.
+    for (AprilTagDetection detection : currentDetections) {
+      if (detection.metadata != null) {
+        telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+        telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+        telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+        telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+      } else {
+        telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+        telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+      }
+    }   // end for() loop
+
+  }   // end method telemetryAprilTag()
 
 
 
-    private void scanTfod(){
-      List<Recognition> currentRecognitions = tfod.getRecognitions();
+  private void scanTfod(){
+    List<Recognition> currentRecognitions = tfod.getRecognitions();
 
-      for (Recognition recognition : currentRecognitions) {
-            double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
-            double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
-            double conf = (recognition.getConfidence() * 100);
-      
+    for (Recognition recognition : currentRecognitions) {
+      double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
+      double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
+      double conf = (recognition.getConfidence() * 100);
+
       if(0<=x&&x<=300){
         found = 2;
       }
       else if(300<=x&&x<=640){
         found = 3;
       }
-      
-      }//end for
-    }
-    
-    /**
-     * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
-     */
-    private void telemetryTfod() {
-        List<Recognition> currentRecognitions = tfod.getRecognitions();
-        telemetry.addData("# Objects Detected", currentRecognitions.size());
 
-        // Step through the list of recognitions and display info for each one.
-        for (Recognition recognition : currentRecognitions) {
-            double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
-            double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
+    }//end for
+  }
 
-            telemetry.addData(""," ");
-            telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
-            telemetry.addData("- Position", "%.0f / %.0f", x, y);
-            telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
-        }   // end for() loop
+  /**
+   * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
+   */
+  private void telemetryTfod() {
+    List<Recognition> currentRecognitions = tfod.getRecognitions();
+    telemetry.addData("# Objects Detected", currentRecognitions.size());
 
-    }   // end method telemetryTfod()
+    // Step through the list of recognitions and display info for each one.
+    for (Recognition recognition : currentRecognitions) {
+      double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
+      double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
+
+      telemetry.addData(""," ");
+      telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
+      telemetry.addData("- Position", "%.0f / %.0f", x, y);
+      telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
+    }   // end for() loop
+
+  }   // end method telemetryTfod()
 
 /*
     private void tfodFind();{
         List<Recognition> currentRecognitions = tfod.getRecognitions();
-        
+
         for (Recognition recognition : currentRecognitions) {
             double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
             double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
             double conf = (recognition.getConfidence() * 100);
-            
+
         }
     }
-    
-  
+
+
     */
-    
-    
+
+
   public void offStack(){
     Elbow.setTargetPosition(-160);
     Elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -362,7 +368,7 @@ public class CameraFarBlue extends LinearOpMode {
     RArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     LArm.setPower(0);
     RArm.setPower(0);
-    
+
   }
   public void stack(){
     Elbow.setTargetPosition(-150);
@@ -374,9 +380,9 @@ public class CameraFarBlue extends LinearOpMode {
     RArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     LArm.setPower(0);
     RArm.setPower(0);
-    
+
   }
-    //puts the arm down
+  //puts the arm down
   public void armDown(){
     //Wrist.setPosition(1);
     sleep(50);
@@ -390,13 +396,13 @@ public class CameraFarBlue extends LinearOpMode {
     LArm.setPower(0.25);
     RArm.setPower(0.25);
   }//end armDown
-       
+
   public void armSet(){
     Elbow.setTargetPosition(-100);
     Elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     Elbow.setPower(0.6);
   }
-  //moves the arms to scoring position 
+  //moves the arms to scoring position
   public void score(){
     Elbow.setTargetPosition(-550);
     Elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -407,10 +413,10 @@ public class CameraFarBlue extends LinearOpMode {
     RArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     LArm.setPower(0.3);
     RArm.setPower(0.3);
-    Wrist.setPosition(0.35);
+    Wrist.setPosition(0.3);
   }//end score
-        
-  //method for keeping the code cleaner and for grouping the initialization commands        
+
+  //method for keeping the code cleaner and for grouping the initialization commands
   public void initialize() {
     FR.setDirection(DcMotor.Direction.FORWARD);
     BR.setDirection(DcMotor.Direction.FORWARD);
@@ -430,20 +436,20 @@ public class CameraFarBlue extends LinearOpMode {
     Elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     Elbow.setDirection(DcMotor.Direction.FORWARD);
     LClaw.setDirection(Servo.Direction.REVERSE);
-    LClaw.scaleRange(0.48, 0.55);
-    RClaw.scaleRange(0.01, 0.09);
-    Wrist.scaleRange(0.19, 0.75);
+    LClaw.scaleRange(0.4, 0.54);
+    RClaw.scaleRange(0.01, 0.15);
+    Wrist.scaleRange(0.112, 0.7);
     resetEncoders();
     imu.resetYaw();
   }//end initialize
-        
+
   //method for setting the colors to a variable
   public void scanColors(){
     Red = fSensor.red();
     Blue = fSensor.blue();
     Green = fSensor.green();
   }//end scan
-       
+
   //method to stop the motors 
   public void noMove(){
     FL.setPower(0);
@@ -459,7 +465,7 @@ public class CameraFarBlue extends LinearOpMode {
   -------------------------------------------------
   These methods are used many times, they help reduce redundancy
   */
-    
+
   //Sets the mode of the motors to RUN_TO_POSITION
   //Typically used with moving for a specific duration
   public void runToPos(){
@@ -468,7 +474,7 @@ public class CameraFarBlue extends LinearOpMode {
     BL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     BR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
   }//end runToPos
-    
+
   //Stops and resets the encoder value stored in the motors
   //Typically used to refresh the encoder values to make it easier to code
   public void resetEncoders(){
@@ -485,7 +491,7 @@ public class CameraFarBlue extends LinearOpMode {
     BL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     BR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
   }//end resetEncoders
-  
+
   //not work rn?
   /*  
   public void diagonalRight(double speed){
@@ -501,8 +507,8 @@ public class CameraFarBlue extends LinearOpMode {
     FL.setPower(speed);
     FR.setPower(0);
   }
-  */  
-  
+  */
+
   //Makes the motors turn, so the robot turns
   //Positive is left, negative is right
   public void turning(double speed){
@@ -511,7 +517,7 @@ public class CameraFarBlue extends LinearOpMode {
     FL.setPower(speed);
     FR.setPower(speed);
   }//end turning
-    
+
   //Makes the motors turn, so the robot strafes
   //Positive is left, negative is right
   public void strafe(double speed){
@@ -520,7 +526,7 @@ public class CameraFarBlue extends LinearOpMode {
     BL.setPower(-speed);
     BR.setPower(speed);
   }//end strafe
-    
+
   //Makes the motors turn, so the robot moves
   //Positive is forward, negative is left
   public void move(double speed){
@@ -529,7 +535,7 @@ public class CameraFarBlue extends LinearOpMode {
     BL.setPower(-speed);
     BR.setPower(speed);
   }//end move
-    
+
   //Sets the target position of the motors in preparation to move
   public void moveDuration(int duration){
     FL.setTargetPosition(-duration);
@@ -537,7 +543,7 @@ public class CameraFarBlue extends LinearOpMode {
     BL.setTargetPosition(-duration);
     BR.setTargetPosition(duration);
   }//end moveDuration
-    
+
   //Sets the target position of the motors in preparation to strafe
   public void strafeDuration(int duration){
     FL.setTargetPosition(duration);
@@ -545,7 +551,7 @@ public class CameraFarBlue extends LinearOpMode {
     BL.setTargetPosition(-duration);
     BR.setTargetPosition(-duration);
   }//end strafeDuration
-    
+
   //Sets the target position of the motors in preparation to turn
   public void turnDuration(int duration){
     FL.setTargetPosition(duration);
@@ -553,13 +559,13 @@ public class CameraFarBlue extends LinearOpMode {
     BL.setTargetPosition(duration);
     BR.setTargetPosition(duration);
   }
-    
+
   //Uses the turning() to set a power to the motors, so the robot moves
   //It's set up this way to reduce confusion of what is happening
   public void motorSpeed(double speed){
     turning(speed);
   }//end motorSpeed
-    
+
   //Makes the robot wait until it is done moving
   //Then, it resets the encoder values in preparation for the next movement
   private void delayReset(){
@@ -569,15 +575,15 @@ public class CameraFarBlue extends LinearOpMode {
     }//end while
     resetEncoders();
   }//end delayReset
-    
+
   //Returns the Yaw angle of the IMU
   //Yaw is the rotation about the Y axis
   //Used to reduce redundant code
   private Double getAngle(){
     return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
   }//end getAngle
-    
-    
+
+
   //Moves the robot forward for a set duration and speed
   //Include whether or not the robot should wait before starting the next movement
   public void forward(int duration,double speed,Boolean delay){
@@ -588,7 +594,7 @@ public class CameraFarBlue extends LinearOpMode {
       delayReset();
     }//end if
   }//end forward
-    
+
   //The robot strafes left for a set duration and speed
   //Include whether or not the robot should wait before starting the next movement
   public void strafeLeft(int duration,double speed,Boolean delay){
@@ -599,7 +605,7 @@ public class CameraFarBlue extends LinearOpMode {
       delayReset();
     }//end if
   }//end strafeLeft
-    
+
   //The robot strafes right for a set duration and speed
   //Include whether or not the robot should wait before starting the next movement
   public void strafeRight(int duration,double speed,Boolean delay){
@@ -610,7 +616,7 @@ public class CameraFarBlue extends LinearOpMode {
       delayReset();
     }//end if
   }//end strafeRight
-    
+
   //Moves the robot turns left for a set duration and speed
   //Include whether or not the robot should wait before starting the next movement
   public void turnLeft(int duration,double speed,Boolean delay){
@@ -621,7 +627,7 @@ public class CameraFarBlue extends LinearOpMode {
       delayReset();
     }//end if
   }//end turnLeft
-    
+
   //Moves the robot turns right for a set duration and speed
   //Include whether or not the robot should wait before starting the next movement
   public void turnRight(int duration,double speed,boolean delay){
@@ -632,7 +638,7 @@ public class CameraFarBlue extends LinearOpMode {
       delayReset();
     }//end if
   }//end turnRight
-    
+
   //Moves the robot backwards for a set duration and speed
   //Include whether or not the robot should wait before starting the next movement
   public void backwards(int duration,double speed,boolean delay){
@@ -643,9 +649,9 @@ public class CameraFarBlue extends LinearOpMode {
       delayReset();
     }//end if
   }//end backwards
-    
-    
-    
+
+
+
   public void sweep(double angle, double speed){
     IMUTurn(25,.2);
     IMUTurn(-25,.2);
@@ -658,10 +664,10 @@ public class CameraFarBlue extends LinearOpMode {
     double Max = Angle + 0.5;
     while(!(getAngle() > Min && getAngle() < Max) && opModeIsActive()){
       if(getAngle() < Min){
-                
+
         //turns left
         turning(turnSpeed);
-                
+
         while(!(getAngle() > Min && getAngle() < Max) && opModeIsActive()){
           telemetry.update();
           if(getAngle() > Max){
@@ -670,7 +676,7 @@ public class CameraFarBlue extends LinearOpMode {
         }//end while
         turning(0);
       }//end if
-      
+
       else if(getAngle() > Max){
         //turns right
         turning(-turnSpeed);
@@ -683,7 +689,7 @@ public class CameraFarBlue extends LinearOpMode {
         turning(0);
       }//end elseif
     }//end while
-    
+
     resetEncoders();
-    }//end IMUTurn
+  }//end IMUTurn
 }   // end class

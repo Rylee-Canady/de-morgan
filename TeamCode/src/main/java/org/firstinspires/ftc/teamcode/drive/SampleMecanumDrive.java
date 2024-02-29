@@ -54,15 +54,16 @@ import static org.firstinspires.ftc.teamcode.drive.DriveConstants.kV;
  */
 @Config
 public class SampleMecanumDrive extends MecanumDrive {
-    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(13, 0, 1);
-    public static PIDCoefficients HEADING_PID = new PIDCoefficients(11, 0, 1);
+    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(11, 0, 0);
+    public static PIDCoefficients HEADING_PID = new PIDCoefficients(4, 0, 0);
 
     /*
      *60/48.5
      * 60 / 49
      * 60 / 49
+     * Old: 1.237113402
      */
-    public static double LATERAL_MULTIPLIER = 1.237113402;
+    public static double LATERAL_MULTIPLIER = 1.55;
 
     public static double VX_WEIGHT = 1;
     public static double VY_WEIGHT = 1;
@@ -98,10 +99,10 @@ public class SampleMecanumDrive extends MecanumDrive {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        leftFront = hardwareMap.get(DcMotorEx.class, "FL (leftDead)");
-        leftRear = hardwareMap.get(DcMotorEx.class, "BL (backDead)");
+        leftFront = hardwareMap.get(DcMotorEx.class, "FL");
+        leftRear = hardwareMap.get(DcMotorEx.class, "BL");
         rightRear = hardwareMap.get(DcMotorEx.class, "BR");
-        rightFront = hardwareMap.get(DcMotorEx.class, "FR (rightDead)");
+        rightFront = hardwareMap.get(DcMotorEx.class, "FR");
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
