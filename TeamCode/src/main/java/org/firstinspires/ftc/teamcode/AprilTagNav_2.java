@@ -151,6 +151,14 @@ private void findAprilTag(){
 }
 */
 
+private void rampUp(double startSpeed, double endSpeed ){
+  double avg = endSpeed - startSpeed;
+
+  for (int i = startSpeed; i < avg, i += .05){
+    
+  }
+}
+
 private void findAprilTag() {
     double minX = -0.5;
     double maxX = 0.5;
