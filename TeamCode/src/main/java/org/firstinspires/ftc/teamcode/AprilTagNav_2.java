@@ -68,8 +68,10 @@ public class AprilTagNav_2 extends LinearOpMode {
   
   //instance variable to house which location the object is, 1 being left, 2 middle, 3 right
   //it is set as -1 to show that it has not found anything 
-  private int found = 1;
-  private AprilTagDetection tagTarget = null;
+  private int found = -1;
+  
+  //indicates that this is the tag that the robot is looking for, this will change with what functions you need it for
+  private int tempTagFound = 1;
     
   @Override
   public void runOpMode() {
@@ -90,38 +92,28 @@ public class AprilTagNav_2 extends LinearOpMode {
     initialize();
     initDoubleVision();
     waitForStart();
-    
-        
+     
     if(opModeIsActive() == true){
-    
-    //set the apriltag target right after finding the location objective
-    //tagTarget = found
-    while(opModeIsActive()){
+      //set the apriltag target right after finding the location objective
+      while(opModeIsActive()){
       
-    
-    findAprilTag();
-    }
-  }//end if opmode is true
-}//end runopmode
+      findAprilTag();
+      }
+    }//end if opmode is true
+  }//end runopmode
 
-/*
-private void findAprilTag(){
-    
-    double minX = -.1;
-    double maxX = .1;
+  private void findAprilTag(){
+    //the min and max can move to accomodated for camera placement
+    double minX = -.5;
+    double maxX = .5;
     List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-    
-    for (AprilTagDetection detection : currentDetections) {
-      
+    for (AprilTagDetection detection : currentDetections) {  
       if(detection.id == found){
-      IMUTurn(getAngle()+detection.ftcPose.yaw,.1);
-    while(!(detection.ftcPose.x > minX && detection.ftcPose.x < maxX) && opModeIsActive()){
-        if(detection.ftcPose.x < minX){
-                
-            //turns left
-            //strafe
-            strafe(-.25);
-                    
+        IMUTurn(getAngle()+detection.ftcPose.yaw,.1);
+        while(!(detection.ftcPose.x > minX && detection.ftcPose.x < maxX) && opModeIsActive()){
+          if(detection.ftcPose.x < minX){     
+            //strafe left
+            strafe(-.25);        
             while(!(detection.ftcPose.x > minX && detection.ftcPose.x < maxX) && opModeIsActive()){
               telemetry.update();
               if(detection.ftcPose.x > maxX){
@@ -130,9 +122,7 @@ private void findAprilTag(){
             }//end while
             strafe(0);
           }//end if
-
           else if(detection.ftcPose.x > maxX){
-            //turns right
             strafe(.25);
             while(!(detection.ftcPose.x > minX && detection.ftcPose.x < maxX) && opModeIsActive()){
               telemetry.update();
@@ -143,71 +133,83 @@ private void findAprilTag(){
             strafe(0);
           }//end elseif
         }//end while
-        
-        resetEncoders();
-        
-    }
-    }
-}
-*/
+        strafe(0);
+        resetEncoders(); 
+      }//end if found
+    }//end for
+  }//end findAprilTag()
 
-private void rampUp(double startSpeed, double endSpeed ){
-  double avg = endSpeed - startSpeed;
-
-  for (int i = startSpeed; i < avg, i += .05){
-    
-  }
-}
-
-private void findAprilTag() {
+  private void rampPower(double currentPower,double targetPower){
+    //makes an integer for amount iterations
+    int iterations = 5;
+    //if the target power is greater than current power then ramp power up
+    if(targetPower > currentPower){
+      //creates the int for the increment or the amount that will be added to the current power
+      double increment = (targetPower-currentPower)/iterations;
+      //while loop to get the current power to the target power
+      while(currentPower <= targetPower){
+        //adds the calculated increment to the current power
+        currentPower += increment;
+        //int in miliseconds, controls how fast it ramps up
+        sleep(200);
+        //when converting to blocks this would be "Strafe with: power"
+        strafe(currentPower);
+      }//end while loop
+    }//end if statement
+    else if(targetPower < currentPower){
+      //creates the int for the increment or the amount that will be subtracted from the current power
+      double increment = (currentPower-targetPower)/iterations;
+      //while loop to get the current power to the target power
+      while(currentPower >= targetPower){
+        //adds the calculated increment to the current power
+        currentPower -= increment;
+        //int in miliseconds, controls how fast it ramps up
+        sleep(200);
+        //when converting to blocks this would be "Strafe with: power"
+        strafe(currentPower);
+      }//end while loop
+    }//end else if statement
+  }//end rampPower
+  
+  private void findAprilTag() {
     double minX = -0.5;
     double maxX = 0.5;
+    List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+    for (AprilTagDetection detection : currentDetections) {
+      if (detection.id == found) {
+          double currentX = detection.ftcPose.x; // Update X coordinate
+          double currentYaw = detection.ftcPose.yaw; // Update yaw angle
 
-
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.id == found) {
-                double currentX = detection.ftcPose.x; // Update X coordinate
-                double currentYaw = detection.ftcPose.yaw; // Update yaw angle
-
-                IMUTurn(getAngle() + currentYaw, 0.1);
-                //while current x is not greater than min x or current x is not less than max x
-                while (!(currentX > minX && currentX < maxX) && opModeIsActive()) {
-                  aprilTag.getFreshDetections();
-                  currentX = detection.ftcPose.x;
-                    if (currentX < minX) {
-                        // Turn left
-                        strafe(0.1);
-                    } else if (currentX > maxX) {
-                        // Turn right
-                        strafe(-0.1);
-                    }
-
-                }
-                // Stop strafing once the X coordinate is within range
-                strafe(0);
-                resetEncoders();
+          IMUTurn(getAngle() + currentYaw, 0.1);
+          //while current x is not greater than min x or current x is not less than max x
+          while (!(currentX > minX && currentX < maxX) && opModeIsActive()) {
+            aprilTag.getFreshDetections();
+            urrentX = detection.ftcPose.x;
+            if (currentX < minX) {
+              // Turn left
+              strafe(0.1);
+            } else if (currentX > maxX) {
+              // Turn right
+              strafe(-0.1);
             }
+
+          }
+          // Stop strafing once the X coordinate is within range
+          strafe(0);
+          resetEncoders();
         }
-        telemetry.update(); // Update telemetry if needed
-
-}
-
-
-
-
-
+      }
+    telemetry.update(); // Update telemetry if needed
+  }
+  
     /**
      * Initialize AprilTag and TFOD.
      */
-    private void initDoubleVision() {
-        
-        aprilTag = new AprilTagProcessor.Builder().build();
-
-        aprilTag.setDecimation(3);
-    
-        TfodProcessor.Builder tensorBuilder;
-        VisionPortal.Builder tensorVisionPortal;
+  private void initDoubleVision() {
+    aprilTag = new AprilTagProcessor.Builder().build();
+    aprilTag.setDecimation(3);
+    TfodProcessor.Builder tensorBuilder;
+    VisionPortal.Builder tensorVisionPortal;
 
     // First, create a TfodProcessor.Builder.
     tensorBuilder = new TfodProcessor.Builder();
@@ -220,13 +222,10 @@ private void findAprilTag() {
     // Create a TfodProcessor by calling build.
     tfod = tensorBuilder.build();
     // Next, create a VisionPortal.Builder and set attributes related to the camera.
-
-        
     myVisionPortal = new VisionPortal.Builder()
         .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
         .addProcessors(tfod, aprilTag)
         .build();
-        
     }   // end initDoubleVision()
 
     /**
@@ -250,8 +249,6 @@ private void findAprilTag() {
         }   // end for() loop
 
     }   // end method telemetryAprilTag()
-
-
 
     private void scanTfod(){
       List<Recognition> currentRecognitions = tfod.getRecognitions();
@@ -378,8 +375,7 @@ private void findAprilTag() {
     BL.setPower(0);
     BR.setPower(0);
   }//end noMove
-        
-        
+           
   /*
   -------------------------------------------------
                Helper Methods (Start)
@@ -412,23 +408,6 @@ private void findAprilTag() {
     BL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     BR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
   }//end resetEncoders
-  
-  //not work rn?
-  /*  
-  public void diagonalRight(double speed){
-    BL.setPower(speed);
-    BR.setPower(0);
-    FL.setPower(0);
-    FR.setPower(speed);
-  }
-  
-  public void diagonalLeft(double speed){
-    BL.setPower(0);
-    BR.setPower(speed);
-    FL.setPower(speed);
-    FR.setPower(0);
-  }
-  */  
   
   //Makes the motors turn, so the robot turns
   //Positive is left, negative is right
@@ -504,7 +483,6 @@ private void findAprilTag() {
     return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
   }//end getAngle
     
-    
   //Moves the robot forward for a set duration and speed
   //Include whether or not the robot should wait before starting the next movement
   public void forward(int duration,double speed,Boolean delay){
@@ -576,7 +554,8 @@ private void findAprilTag() {
   public void sweep(double angle, double speed){
     IMUTurn(25,.2);
     IMUTurn(-25,.2);
-  }
+  }//end sweep
+  
   //Makes the robot turn to a specified angle
   //The angle depends on the last time the IMU values were reset
   //The robot turns until the robot's angle is 0.5 off the specified angle
