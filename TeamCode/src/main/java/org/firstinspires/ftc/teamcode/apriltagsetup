@@ -1,0 +1,11 @@
+private void initAprilTag() {
+    aprilTag = new AprilTagProcessor.Builder().build();
+    aprilTag.setDecimation(3);
+
+    // Next, create a VisionPortal.Builder and set attributes related to the camera.
+    myVisionPortal = new VisionPortal.Builder()
+        .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+        .addProcessors(aprilTag)
+        .build();
+    }   // end initAprilTag
+
